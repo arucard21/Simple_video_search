@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>MMSR Systems - Simple Video Search</title>
+		<meta charset="UTF-8"> 
+		<meta name="description" content="A simple video-based search system">
+		<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+		<style>
+			body
+			{
+				width: 90%;
+			}
+			
+			h2
+			{
+				display: none;
+			}
+			
+			#videoURL
+			{
+				width: 80%;
+			}
+			
+			#search
+			{
+				width: 10%;
+			}
+		</style>
+	</head>
+	<body>
+		<script>
+			function searchVideos(providedURL){
+				$.getJSON('api/videos', {videoURL: providedURL})
+					.done(function( similarVideos) {
+						document.getElementById('searchResults').innerHTML = JSON.stringify(similarVideos);
+						// TODO maybe improve how the videos are shown as this is not for debug purposes
+					})
+					.fail(function() {
+						document.getElementById('searchResults').innerHTML = "Could not retrieve videos similar to the one provided at " + providedURL;
+					})
+					.always(function() {
+						document.getElementById('searchResultsHeader').style.display = 'block';
+						
+					});
+				return false;
+			}
+		</script>
+		<h1>Simple Video Search</h1>
+		<form onsubmit="return searchVideos(document.getElementById('videoURL').value);" enctype="application/x-www-form-urlencoded" method="post">
+			Please provide a URL to your video 
+			(If your video is not accessible through URL, you can upload it <a href="https://cloud.arucard.duckdns.org/index.php/s/nbfeEFzTqFSeAtQ">here</a>)
+			<input type="url" id="videoURL" name="videoURL" value="https://cloud.arucard.duckdns.org/index.php/s/nbfeEFzTqFSeAtQ/download?path=%2F&files=Sintel.mkv">
+			<input type="submit" id="search" value="Search">
+		</form>
+		<h2 id="featuresHeader">Features</h2>
+		<div id="features">
+		</div>
+		<h2 id="keywordsHeader">Keywords</h2>
+		<div id="keywords">
+		</div>
+		<h2 id="searchResultsHeader">Search Results</h2>
+		<div id="searchResults">
+		</div>
+	</body>
+</html>
