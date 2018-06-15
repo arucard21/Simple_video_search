@@ -30,40 +30,16 @@
 	<body>
 		<script>
 			function searchVideos(providedURL){
-			//TODO create API to receive these requests
-				$.getJSON('api/features', {videoURL: providedURL})
-					.done(function( features ) {
-						document.getElementById('featuresHeader').style.display = 'block';
-						document.getElementById('features').innerHTML = JSON.stringify(features);
-						$.getJSON('api/keywords', {features: features})
-							.done(function( keywords ) {
-								document.getElementById('keywords').innerHTML = JSON.stringify(keywords);
-								$.getJSON('api/videos', {keywords: keywords})
-									.done(function( similarVideos) {
-										document.getElementById('searchResults').innerHTML = JSON.stringify(similarVideos);
-										// TODO maybe improve how the videos are shown as this is not for debug purposes
-									})
-									.fail(function() {
-										document.getElementById('searchResults').innerHTML = "Could not retrieve videos similar to the one provided at " + providedURL;
-									})
-									.always(function() {
-										document.getElementById('searchResultsHeader').style.display = 'block';
-										
-									});
-							})
-							.fail(function() {
-								document.getElementById('keywords').innerHTML = "Could not retrieve the classification keywords of the video at " + providedURL;
-							})
-							.always(function() {
-								document.getElementById('keywordsHeader').style.display = 'block';
-								
-							});
+				$.getJSON('api/videos', {videoURL: providedURL})
+					.done(function( similarVideos) {
+						document.getElementById('searchResults').innerHTML = JSON.stringify(similarVideos);
+						// TODO maybe improve how the videos are shown as this is not for debug purposes
 					})
 					.fail(function() {
-						document.getElementById('features').innerHTML = "Could not retrieve the features of the video at " + providedURL;
+						document.getElementById('searchResults').innerHTML = "Could not retrieve videos similar to the one provided at " + providedURL;
 					})
 					.always(function() {
-						document.getElementById('featuresHeader').style.display = 'block';
+						document.getElementById('searchResultsHeader').style.display = 'block';
 						
 					});
 				return false;
