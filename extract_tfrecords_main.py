@@ -95,10 +95,9 @@ def frame_iterator(video_url, ydl, every_ms=1000, max_num_frames=300):
   info_dict = ydl.extract_info(video_url, download=False)
   format = info_dict.get('formats', None)[-1]
   url = format.get('url', None)
-
   video_capture = cv2.VideoCapture(url)
   if not video_capture.isOpened():
-      print('Error: Cannot open video url ' + video_url, file=sys.stderr)
+      print >> sys.stderr, 'Error: Cannot open video url ' + video_url
       return
   last_ts = -99999  # The timestamp of last retrieved frame.
   num_retrieved = 0
@@ -162,7 +161,7 @@ def main(args):
       rgb_features.append(_bytes_feature(quantize(features)))
 
     if not rgb_features:
-      print('Could not get features for ' + video, file=sys.stderr)
+      print >> sys.stderr, 'Could not get features for ' + video
       total_error += 1
       continue
 
