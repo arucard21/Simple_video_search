@@ -1,4 +1,5 @@
 import os
+from urlparse import urlparse
 
 from flask import Flask, render_template, request
 from flask_restful import Resource, Api
@@ -14,8 +15,12 @@ def mainSearchPage():
 class Videos(Resource):
     def get(self):
 		videoURL = request.args.get('videoURL')
+		url = urlparse(videoURL)
+		isStreamed = False
+		if url.netloc == 'www.youtube.com':
+			isStreamed = True
 		tfrecord = "providedVideo.tfrecord"
-		extract_features(tfrecord, [videoURL], ["1"])
+		extract_features(tfrecord, [videoURL], ["1"], streaming = isStreamed)
 		# show interim results
 		if os.path.getsize(tfrecord) > 0:
 			return 'The video at {} successfully had its features extracted'.format(videoURL) 

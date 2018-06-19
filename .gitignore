@@ -105,3 +105,6 @@ venv.bak/
 
 # KDevelop 
 *.kdev4
+
+# Tensorflow
+*.tfrecord
