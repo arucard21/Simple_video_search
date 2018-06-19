@@ -31,53 +31,80 @@ import cv2
 import feature_extractor
 import numpy
 import tensorflow as tf
-from tensorflow import app
-from tensorflow import flags
 import youtube_dl
-
-FLAGS = flags.FLAGS
 
 # In OpenCV3.X, this is available as cv2.CAP_PROP_POS_MSEC
 # In OpenCV2.X, this is available as cv2.cv.CV_CAP_PROP_POS_MSEC
 CAP_PROP_POS_MSEC = 0
 
-if __name__ == '__main__':
-    # Required flags for input and output.
-    flags.DEFINE_string('output_tfrecords_file', None, 'File containing tfrecords will be written at this path.')
+def extract_features(output_tfrecords_file,
+    videos_urls,
+    videos_labels,
+    streaming = False,
+    model_dir = 'yt8m',
+    frames_per_second = 1,
+    skip_frame_level_features = False,
+    labels_feature_key = 'labels',
+    image_feature_key = 'rgb',
+    video_file_feature_key = 'id',
+    insert_zero_audio_features = True):
 
-    # command line flags
-    flags.DEFINE_spaceseplist("videos_urls", None, "Space separated videos urls")
-    flags.DEFINE_spaceseplist("videos_labels", None, "Video labels, labels for the same video are comma separated, "
-                                                     "labels for different videos are space separated")
-    flags.DEFINE_boolean("streaming", False, "Indicate whether passed links stationary or from streaming "
-                         "portal like YouTube, Vimeo etc.")
-    # Optional flags.
-    flags.DEFINE_string('model_dir', 'yt8m', 'Directory to store model files. It defaults to ~/yt8m')
+    extractor = feature_extractor.YouTube8MFeatureExtractor(model_dir)
+    writer = tf.python_io.TFRecordWriter(output_tfrecords_file)
+    total_written = 0
+    total_error = 0
+    ydl = youtube_dl.YoutubeDL({})
+    for video, labels in zip(videos_urls, videos_labels):
+        rgb_features = []
+        sum_rgb_features = None
+        for rgb in frame_iterator(video, ydl, streaming, every_ms=1000.0 / frames_per_second):
+            features = extractor.extract_rgb_frame_features(rgb[:, :, ::-1])
+            if sum_rgb_features is None:
+                sum_rgb_features = features
+            else:
+                sum_rgb_features += features
+            rgb_features.append(_bytes_feature(quantize(features)))
 
-    # The following flags are set to match the YouTube-8M dataset format.
-    flags.DEFINE_integer('frames_per_second', 1,
-                         'This many frames per second will be processed')
-    flags.DEFINE_boolean('skip_frame_level_features', False,
-                         'If set, frame-level features will not be written: only '
-                         'video-level features will be written with feature '
-                         'names mean_*')
-    flags.DEFINE_string('labels_feature_key', 'labels',
-                        'Labels will be written to context feature with this '
-                        'key, as int64 list feature.')
-    flags.DEFINE_string('image_feature_key', 'rgb',
-                        'Image features will be written to sequence feature with '
-                        'this key, as bytes list feature, with only one entry, '
-                        'containing quantized feature string.')
-    flags.DEFINE_string('video_file_feature_key', 'id',
-                        'Input <video_file> will be written to context feature '
-                        'with this key, as bytes list feature, with only one '
-                        'entry, containing the file path of the video. This '
-                        'can be used for debugging but not for training or eval.')
-    flags.DEFINE_boolean('insert_zero_audio_features', True,
-                         'If set, inserts features with name "audio" to be 128-D '
-                         'zero vectors. This allows you to use YouTube-8M '
-                         'pre-trained model.')
+        if not rgb_features:
+            print >> sys.stderr, 'Could not get features for ' + video
+            total_error += 1
+            continue
 
+        mean_rgb_features = sum_rgb_features / len(rgb_features)
+
+        # Create SequenceExample proto and write to output.
+        feature_list = {
+            image_feature_key: tf.train.FeatureList(feature=rgb_features),
+        }
+        context_features = {
+            labels_feature_key: _int64_list_feature(
+                sorted(map(int, labels.split(',')))),
+            video_file_feature_key: _bytes_feature(_make_bytes(
+                list(map(ord, video)))),
+            'mean_' + image_feature_key: tf.train.Feature(
+                float_list=tf.train.FloatList(value=mean_rgb_features)),
+        }
+
+        if insert_zero_audio_features:
+            zero_vec = [0] * 128
+            feature_list['audio'] = tf.train.FeatureList(
+                feature=[_bytes_feature(_make_bytes(zero_vec))] * len(rgb_features))
+            context_features['mean_audio'] = tf.train.Feature(
+                float_list=tf.train.FloatList(value=zero_vec))
+
+        if skip_frame_level_features:
+            example = tf.train.SequenceExample(
+                context=tf.train.Features(feature=context_features))
+        else:
+            example = tf.train.SequenceExample(
+                context=tf.train.Features(feature=context_features),
+                feature_lists=tf.train.FeatureLists(feature_list=feature_list))
+        writer.write(example.SerializeToString())
+        total_written += 1
+
+    writer.close()
+    print(('Successfully encoded %i out of %i videos' % (
+        total_written, total_written + total_error)))
 
 def frame_iterator(video_url, ydl, streaming, every_ms=1000, max_num_frames=300):
     """Uses OpenCV to iterate over all frames of filename at a given frequency.
@@ -91,7 +118,6 @@ def frame_iterator(video_url, ydl, streaming, every_ms=1000, max_num_frames=300)
     Yields:
       RGB frame with shape (image height, image width, channels)
     """
-
     if streaming:
         # for loading an online video directly into the memory
         info_dict = ydl.extract_info(video_url, download=False)
@@ -145,66 +171,3 @@ def quantize(features, min_quantized_value=-2.0, max_quantized_value=2.0):
     features = [int(round(f)) for f in features]
 
     return _make_bytes(features)
-
-
-def main(args):
-    extractor = feature_extractor.YouTube8MFeatureExtractor(FLAGS.model_dir)
-    writer = tf.python_io.TFRecordWriter(FLAGS.output_tfrecords_file)
-    total_written = 0
-    total_error = 0
-    ydl = youtube_dl.YoutubeDL({})
-    for video, labels in zip(FLAGS.videos_urls, FLAGS.videos_labels):
-        rgb_features = []
-        sum_rgb_features = None
-        for rgb in frame_iterator(video, ydl, FLAGS.streaming, every_ms=1000.0 / FLAGS.frames_per_second):
-            features = extractor.extract_rgb_frame_features(rgb[:, :, ::-1])
-            if sum_rgb_features is None:
-                sum_rgb_features = features
-            else:
-                sum_rgb_features += features
-            rgb_features.append(_bytes_feature(quantize(features)))
-
-        if not rgb_features:
-            print >> sys.stderr, 'Could not get features for ' + video
-            total_error += 1
-            continue
-
-        mean_rgb_features = sum_rgb_features / len(rgb_features)
-
-        # Create SequenceExample proto and write to output.
-        feature_list = {
-            FLAGS.image_feature_key: tf.train.FeatureList(feature=rgb_features),
-        }
-        context_features = {
-            FLAGS.labels_feature_key: _int64_list_feature(
-                sorted(map(int, labels.split(',')))),
-            FLAGS.video_file_feature_key: _bytes_feature(_make_bytes(
-                list(map(ord, video)))),
-            'mean_' + FLAGS.image_feature_key: tf.train.Feature(
-                float_list=tf.train.FloatList(value=mean_rgb_features)),
-        }
-
-        if FLAGS.insert_zero_audio_features:
-            zero_vec = [0] * 128
-            feature_list['audio'] = tf.train.FeatureList(
-                feature=[_bytes_feature(_make_bytes(zero_vec))] * len(rgb_features))
-            context_features['mean_audio'] = tf.train.Feature(
-                float_list=tf.train.FloatList(value=zero_vec))
-
-        if FLAGS.skip_frame_level_features:
-            example = tf.train.SequenceExample(
-                context=tf.train.Features(feature=context_features))
-        else:
-            example = tf.train.SequenceExample(
-                context=tf.train.Features(feature=context_features),
-                feature_lists=tf.train.FeatureLists(feature_list=feature_list))
-        writer.write(example.SerializeToString())
-        total_written += 1
-
-    writer.close()
-    print(('Successfully encoded %i out of %i videos' % (
-        total_written, total_written + total_error)))
-
-
-if __name__ == '__main__':
-    app.run(main=main)
