@@ -32,7 +32,8 @@
 			function searchVideos(providedURL){
 				$.getJSON('api/videos', {videoURL: providedURL})
 					.done(function( similarVideos) {
-						document.getElementById('searchResults').innerHTML = JSON.stringify(similarVideos);
+						console.log(similarVideos)
+						document.getElementById('searchResults').innerHTML = 'The video successfully had its features extracted'
 						// TODO maybe improve how the videos are shown as this is not for debug purposes
 					})
 					.fail(function() {
@@ -48,7 +49,8 @@
 		<h1>Simple Video Search</h1>
 		<form onsubmit="return searchVideos(document.getElementById('videoURL').value);" enctype="application/x-www-form-urlencoded" method="post">
 			Please provide a URL to your video 
-			(If your video is not accessible through URL, you can upload it <a href="https://cloud.arucard.duckdns.org/index.php/s/nbfeEFzTqFSeAtQ">here</a>)
+			(If your video is not accessible through URL, you can upload it <a href="https://cloud.arucard.duckdns.org/index.php/s/nbfeEFzTqFSeAtQ">here</a>)<br>
+			You can also provide a <a href="https://www.youtube.com/watch?v=mKz5HMjdnYY">YouTube URL</a>
 			<input type="url" id="videoURL" name="videoURL" value="https://cloud.arucard.duckdns.org/index.php/s/nbfeEFzTqFSeAtQ/download?path=%2F&files=Sintel.mkv">
 			<input type="submit" id="search" value="Search">
 		</form>

@@ -1,9 +1,11 @@
 import os
+import sys
 from urlparse import urlparse
 
 from flask import Flask, render_template, request
 from flask_restful import Resource, Api
 from extract_tfrecords_main import extract_features
+import tensorflow as tf
 
 app = Flask(__name__)
 api = Api(app)
@@ -20,13 +22,15 @@ class Videos(Resource):
 		if url.netloc == 'www.youtube.com':
 			isStreamed = True
 		tfrecord = "providedVideo.tfrecord"
+		print >> sys.stdout, '[SimpleVideoSearch] Extracting the features of this video'
+		sys.stdout.flush()
 		extract_features(tfrecord, [videoURL], ["1"], streaming = isStreamed)
-		# show interim results
-		if os.path.getsize(tfrecord) > 0:
-			return 'The video at {} successfully had its features extracted'.format(videoURL) 
-		else:
-			return 'The video at {} failed to have its features extracted'.format(videoURL) 
-		
+		retval = ""
+		for returnedValue in tf.python_io.tf_record_iterator('providedVideo.tfrecord'):
+			retval = tf.train.Example.FromString(returnedValue)
+		sys.stdout.flush()
+		# return interim results (extracted features)
+		return '{}'.format(retval)
 		# TODO In the end only return the search results (a list of videos)
 		#return {'url': videoURL}
 
