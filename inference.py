@@ -33,12 +33,12 @@ import utils
 FLAGS = flags.FLAGS
 
 if __name__ == '__main__':
-  flags.DEFINE_string("train_dir", r"C:\Users\Aishwarya\Documents\books\books_q4\Multimedia search and reccomendation\pretrainedmodel\public",
+  flags.DEFINE_string("train_dir", r"pretrained models",
                       "The directory to load the model files from.")
   flags.DEFINE_string("output_file", "test-lstm-0002-val-150-random.csv",
                       "The file to save the predictions to.")
   flags.DEFINE_string(
-      "input_data_pattern", r"C:\Users\Aishwarya\Documents\books\books_q4\Multimedia search and reccomendation\project\Youtube-8M-WILLOW-master\test0z.tfrecord",
+      "input_data_pattern", r"test0z.tfrecord",
       "File glob defining the evaluation dataset in tensorflow.SequenceExample "
       "format. The SequenceExamples are expected to have an 'rgb' byte array "
       "sequence feature as well as a 'labels' int64 context feature.")
