@@ -1,11 +1,13 @@
 import os
 import sys
+import csv
 from urlparse import urlparse
 
 from flask import Flask, render_template, request
 from flask_restful import Resource, Api
-from extract_tfrecords_main import extract_features
 import tensorflow as tf
+from extract_tfrecords_main import extract_features
+from youtube8m.inference import infer
 
 app = Flask(__name__)
 api = Api(app)
@@ -29,8 +31,18 @@ class Videos(Resource):
 		for returnedValue in tf.python_io.tf_record_iterator('providedVideo.tfrecord'):
 			retval = tf.train.Example.FromString(returnedValue)
 		sys.stdout.flush()
+		
+		print >> sys.stdout, '[SimpleVideoSearch] Classifying the video'
+		infer("logistic-model", "providedVideo.tfrecord", "infer_results.csv")
+		
+		firstInference = None
+		with open("infer_results.csv", "rb") as csvfile:
+			inferenceReader= csv.DictReader(csvfile)
+			firstInference = inferenceReader.next()
+		return firstInference
+
 		# return interim results (extracted features)
-		return '{}'.format(retval)
+		#return '{}'.format(retval)
 		# TODO In the end only return the search results (a list of videos)
 		#return {'url': videoURL}
 

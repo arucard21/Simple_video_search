@@ -106,5 +106,10 @@ venv.bak/
 # KDevelop 
 *.kdev4
 
-# Tensorflow
+# Training data and trained model
+dataset
+logistic-model
+
+# intermediate results files
 *.tfrecord
+infer_results.csv
