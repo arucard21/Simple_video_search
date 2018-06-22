@@ -18,12 +18,19 @@ def mainSearchPage():
 
 class Videos(Resource):
     def get(self):
+		# define variables for file and directory names
+		tfrecord = "providedVideo.tfrecord"
+		csv_file = "infer_results.csv"
+		trained_model_dir = "logistic-model"
+
+		# parse URL and check if the hostname is that of a streaming site
 		videoURL = request.args.get('videoURL')
 		url = urlparse(videoURL)
 		isStreamed = False
 		if url.netloc == 'www.youtube.com':
 			isStreamed = True
-		tfrecord = "providedVideo.tfrecord"
+
+		# Extract the features to a .tfrecord file
 		print >> sys.stdout, '[SimpleVideoSearch] Extracting the features of this video'
 		sys.stdout.flush()
 		extract_features(tfrecord, [videoURL], ["1"], streaming = isStreamed)
@@ -31,20 +38,19 @@ class Videos(Resource):
 		for returnedValue in tf.python_io.tf_record_iterator('providedVideo.tfrecord'):
 			retval = tf.train.Example.FromString(returnedValue)
 		sys.stdout.flush()
-		
+
+		# Classify the video based on the .tfrecord file and store the results in a .csv file
 		print >> sys.stdout, '[SimpleVideoSearch] Classifying the video'
-		infer("logistic-model", "providedVideo.tfrecord", "infer_results.csv")
-		
+		infer(trained_model_dir, tfrecord, csv_file)		
 		firstInference = None
-		with open("infer_results.csv", "rb") as csvfile:
+		with open(csv_file, "rb") as csvfile:
 			inferenceReader= csv.DictReader(csvfile)
 			firstInference = inferenceReader.next()
 		return firstInference
 
-		# return interim results (extracted features)
-		#return '{}'.format(retval)
+		# Detect similar videos based on both the feature-vector and the classified labels
+		
 		# TODO In the end only return the search results (a list of videos)
-		#return {'url': videoURL}
 
 api.add_resource(Videos, '/api/videos/')
 
