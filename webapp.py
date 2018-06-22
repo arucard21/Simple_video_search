@@ -8,6 +8,7 @@ from flask import Flask, render_template, request
 from flask_restful import Resource, Api
 import tensorflow as tf
 from extract_tfrecords_main import extract_features
+from similarity import similar_videos
 from youtube8m.inference import infer
 from google.protobuf.json_format import MessageToJson
 
@@ -50,13 +51,14 @@ class Videos(Resource):
 			firstInference = inferenceReader.next()
 		
 		# Return a JSON containing the feature fector and inference results (for debugging purposes)
-		# FIXME remove this debugging code when we're returning similar videos
-		featuresJSON = MessageToJson(features)
-		return '{{"feature_vector": {}, "inference_results": {}}}'.format(featuresJSON, firstInference)
+		# FIXME remove this debugging code when once it's no longer needed
+		with open('debug.json', 'w') as debug_file:
+			json.dump('{{"feature_vector": {}, "inference_results": {}}}'.format(MessageToJson(features), firstInference), debug_file)
 
 		# Detect similar videos based on both the feature-vector and the classified labels
-		
-		# TODO In the end only return the search results (a list of videos)
+		top10_feature_based, top10_label_based = similar_videos(features, firstInference)
+		return top10_feature_based
+		# TODO also return top 10 of label-based, once that's implemented
 
 api.add_resource(Videos, '/api/videos/')
 
