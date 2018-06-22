@@ -1,6 +1,7 @@
 import os
 import sys
 import csv
+import json
 from urlparse import urlparse
 
 from flask import Flask, render_template, request
@@ -8,6 +9,7 @@ from flask_restful import Resource, Api
 import tensorflow as tf
 from extract_tfrecords_main import extract_features
 from youtube8m.inference import infer
+from google.protobuf.json_format import MessageToJson
 
 app = Flask(__name__)
 api = Api(app)
@@ -34,11 +36,11 @@ class Videos(Resource):
 		print >> sys.stdout, '[SimpleVideoSearch] Extracting the features of this video'
 		sys.stdout.flush()
 		extract_features(tfrecord, [videoURL], ["1"], streaming = isStreamed)
-		retval = ""
-		for returnedValue in tf.python_io.tf_record_iterator('providedVideo.tfrecord'):
-			retval = tf.train.Example.FromString(returnedValue)
-		sys.stdout.flush()
-
+		example = None
+		for returnedValue in tf.python_io.tf_record_iterator(tfrecord):
+			example = tf.train.Example.FromString(returnedValue)
+		features = example.features
+		
 		# Classify the video based on the .tfrecord file and store the results in a .csv file
 		print >> sys.stdout, '[SimpleVideoSearch] Classifying the video'
 		infer(trained_model_dir, tfrecord, csv_file)		
@@ -46,7 +48,11 @@ class Videos(Resource):
 		with open(csv_file, "rb") as csvfile:
 			inferenceReader= csv.DictReader(csvfile)
 			firstInference = inferenceReader.next()
-		return firstInference
+		
+		# Return a JSON containing the feature fector and inference results (for debugging purposes)
+		# FIXME remove this debugging code when we're returning similar videos
+		featuresJSON = MessageToJson(features)
+		return '{{"feature_vector": {}, "inference_results": {}}}'.format(featuresJSON, firstInference)
 
 		# Detect similar videos based on both the feature-vector and the classified labels
 		
