@@ -33,7 +33,7 @@
 				$.getJSON('api/videos', {videoURL: providedURL})
 					.done(function( similarVideos) {
 						console.log(similarVideos)
-						document.getElementById('searchResults').innerHTML = 'The video successfully had its features extracted'
+						document.getElementById('searchResults').innerHTML = 'The video successfully had its features extracted and was classified (see web console for more details)'
 						// TODO maybe improve how the videos are shown as this is not for debug purposes
 					})
 					.fail(function() {
