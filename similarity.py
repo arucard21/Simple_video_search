@@ -1,6 +1,9 @@
 import glob
 import numpy as np
 import tensorflow as tf
+from scipy.spatial.distance import jaccard
+
+JACCARD_THRESHOLD = 0.6
 
 def nearest_neighbor_single_feature(provided, dataset):
 	assert len(provided) == len(dataset)
@@ -22,6 +25,33 @@ def nearest_neighbor_features(provided, dataset):
 
 	return distance_mean_rgb + distance_mean_audio
 
+def convert_inferred_labels_to_tuples_list(inferred_label_probabilities):
+	label_pairs_str = inferred_label_probabilities['LabelConfidencePairs']
+	label_pairs_list = label_pairs_str.split()
+	label_pairs_length = len(label_pairs_list)
+	label_tuples = dict()
+	assert label_pairs_length % 2 == 0
+	for index in range(0,label_pairs_length, 2):
+		label_tuples[int(label_pairs_list[index])] = float(label_pairs_list[index+1])
+	return label_tuples
+	
+def convert_inferred_labels_to_list(inferred_label_probabilities):
+	label_tuples = convert_inferred_labels_to_tuples_list(inferred_label_probabilities)
+	max_label_key = max(label_tuples.keys())
+	inferred_labels_full = np.zeros(max_label_key+1, dtype=int)
+	for label_key, label_probability in label_tuples.iteritems():
+		if label_probability >= JACCARD_THRESHOLD:
+			inferred_labels_full[label_key] = 1
+	print 'Inferred {} relevant labels'.format(sum(inferred_labels_full))
+	return inferred_labels_full
+
+def convert_dataset_labels_to_list(dataset_labels):
+	max_label_key = max(dataset_labels)
+	dataset_labels_full = np.zeros(max_label_key+1, dtype=int)
+	for label_key in dataset_labels:
+		dataset_labels_full[label_key] = 1
+	return dataset_labels_full
+
 def similar_videos(provided_features, inferred_label_probabilities):
 	train_records = glob.glob("dataset/train00.tfrecord") # FIXME change back to train*.tfrecord
 	validate_records = glob.glob("dataset/validate00.tfrecord") # FIXME change back to validate*.tfrecord
@@ -37,14 +67,22 @@ def similar_videos(provided_features, inferred_label_probabilities):
 	next_element = iterator.get_next()
 	with tf.Session() as sess:
 		try:
+			inferred_labels_full = convert_inferred_labels_to_list(inferred_label_probabilities)
 			while True:
 				exampleBinaryString= sess.run(next_element)
 				example = tf.train.Example.FromString(exampleBinaryString)
 				count += 1
+				example_id = example.features.feature["id"].bytes_list.value[0]
 				# Compare the provided features with this element of the dataset (nearest neighbor)
-				nn_distance.append((example.features.feature["id"].bytes_list.value[0], nearest_neighbor_features(provided_features, example.features)))
-				# TODO compare the provided inference results with this element of the dataset (Jaccard distance)
-				# the distances should be put in the jac_distance variable
+				nn_distance.append((example_id, nearest_neighbor_features(provided_features, example.features)))
+				
+				# Compare the provided inference results with this element of the dataset (Jaccard distance)
+				dataset_labels_full = convert_dataset_labels_to_list(example.features.feature["labels"].int64_list.value)
+				max_array_size = max(len(inferred_labels_full), len(dataset_labels_full))
+				inferred_labels_full.resize(max_array_size)
+				dataset_labels_full.resize(max_array_size)
+				#print 'Dataset record contained {} labels'.format(sum(dataset_labels_full))
+				jac_distance.append((example_id, jaccard(inferred_labels_full, dataset_labels_full)))
 		except tf.errors.OutOfRangeError:
 			print "Done iterating through dataset"
 		finally:
@@ -52,6 +90,7 @@ def similar_videos(provided_features, inferred_label_probabilities):
 	# Sort the lists based on distance
 	nn_distance.sort(key = lambda tuple: tuple[1])
 	jac_distance.sort(key = lambda tuple: tuple[1])
+
 	# Get the top 10 results
 	top10_feature_based = nn_distance[:10]
 	top10_label_based = jac_distance[:10]

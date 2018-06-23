@@ -33,10 +33,15 @@
 				$.getJSON('api/videos', {videoURL: providedURL})
 					.done(function( similarVideos) {
 						console.log(similarVideos)
-						searchResults = 'Video ID, Distance<br>';
-						for (var index = 0; index < similarVideos.length; index++){
-							searchResults = searchResults + similarVideos[index][0] + ", " + similarVideos[index][1] + '<br>'
+						searchResults = '<h3>Feature-based</h3>Video ID, Distance<br>';
+						for (var index = 0; index < similarVideos[0].length; index++){
+							searchResults = searchResults + similarVideos[0][index][0] + ", " + similarVideos[0][index][1] + '<br>'
 						}
+						searchResults = searchResults + '<h3>Label-based</h3>Video ID, Distance<br>'
+						for (var index = 0; index < similarVideos[1].length; index++){
+							searchResults = searchResults + similarVideos[1][index][0] + ", " + similarVideos[1][index][1] + '<br>'
+						}
+						
 						document.getElementById('searchResults').innerHTML = searchResults;//'The video successfully had its features extracted and was classified (see web console for more details)'
 						// TODO maybe improve how the videos are shown as this is not for debug purposes
 					})

@@ -57,8 +57,7 @@ class Videos(Resource):
 
 		# Detect similar videos based on both the feature-vector and the classified labels
 		top10_feature_based, top10_label_based = similar_videos(features, firstInference)
-		return top10_feature_based
-		# TODO also return top 10 of label-based, once that's implemented
+		return [top10_feature_based, top10_label_based]
 
 api.add_resource(Videos, '/api/videos/')
 
