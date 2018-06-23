@@ -107,9 +107,12 @@ venv.bak/
 *.kdev4
 
 # Training data and trained model
-dataset
+dataset/*.json
+dataset/*.tfrecord
+!dataset/train00.tfrecord
+!dataset/validate00.tfrecord
 logistic-model
 
 # intermediate results files
-*.tfrecord
+providedVideo.tfrecord
 infer_results.csv
