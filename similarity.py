@@ -106,11 +106,13 @@ def create_LSH_Forest():
 	with tf.Session() as sess:
 		try:
 			while True:
-				if count % 1000 == 0:
+				if count % 10000 == 0:
 					print "[SimpleVideoSearch][{}] Processed {} records from the dataset so far".format(datetime.now(), count)
+				if count % 100000 == 0:
 					with open(LSH_FOREST_FILE, 'wb') as forest_file:
 						forest.index()
 						pickle.dump(forest, forest_file, pickle.HIGHEST_PROTOCOL)
+					print "[SimpleVideoSearch][{}] Updated LSH Forest file".format(datetime.now(), count)
 				exampleBinaryString= sess.run(next_element)
 				example = tf.train.Example.FromString(exampleBinaryString)
 				count += 1
