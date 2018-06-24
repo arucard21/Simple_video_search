@@ -95,8 +95,8 @@ def similar_videos(provided_features, inferred_label_probabilities):
 	return (top10_feature_based, top10_label_based)
 
 def create_LSH_Forest():
-	train_records = glob.glob("dataset/train00.tfrecord")
-	validate_records = glob.glob("dataset/validate00.tfrecord")
+	train_records = glob.glob("dataset/train*.tfrecord")
+	validate_records = glob.glob("dataset/validate*.tfrecord")
 	all_records = train_records+validate_records
 	dataset = tf.data.TFRecordDataset(all_records)
 	iterator = dataset.make_one_shot_iterator()
@@ -108,6 +108,9 @@ def create_LSH_Forest():
 			while True:
 				if count % 1000 == 0:
 					print "[SimpleVideoSearch][{}] Processed {} records from the dataset so far".format(datetime.now(), count)
+					with open(LSH_FOREST_FILE, 'wb') as forest_file:
+						forest.index()
+						pickle.dump(forest, forest_file, pickle.HIGHEST_PROTOCOL)
 				exampleBinaryString= sess.run(next_element)
 				example = tf.train.Example.FromString(exampleBinaryString)
 				count += 1
