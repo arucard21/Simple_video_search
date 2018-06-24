@@ -8,7 +8,7 @@ from flask import Flask, render_template, request
 from flask_restful import Resource, Api
 import tensorflow as tf
 from extract_tfrecords_main import extract_features
-from similarity import similar_videos, similar_videos_from_forest
+from similarity import load_forest, similar_videos, similar_videos_from_forest
 from youtube8m.inference import infer
 from google.protobuf.json_format import MessageToJson
 
@@ -67,4 +67,5 @@ class Videos(Resource):
 api.add_resource(Videos, '/api/videos/')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+	load_forest()
+	app.run(debug=True, use_reloader=False)

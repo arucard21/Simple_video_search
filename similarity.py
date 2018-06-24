@@ -8,6 +8,14 @@ from datasketch import MinHashLSHForest, MinHash
 LSH_FOREST_FILE = 'lsh_forest.pkl'
 MAX_AMOUNT_LABELS = 4716
 MINIMUM_PROBABILITY = 0.6
+forest = None
+
+def load_forest():
+	global forest
+	print "[SimpleVideoSearch][{}] Loading pickled LSH Forest".format(datetime.now())
+	with open(LSH_FOREST_FILE, 'rb') as forest_file:
+		forest = pickle.load(forest_file)
+	print "[SimpleVideoSearch][{}] Done loading pickled LSH Forest".format(datetime.now())
 
 def nearest_neighbor_single_feature(provided, dataset):
 	assert len(provided) == len(dataset)
@@ -136,10 +144,9 @@ def similar_videos_from_forest(inferred_label_probabilities):
 	minhash = MinHash(num_perm=128)
 	for label in inferred_labels_full:
 		minhash.update(label)
-
-	forest = None
-	with open(LSH_FOREST_FILE, 'rb') as forest_file:
-		forest = pickle.load(forest_file)
+	
+	if forest == None:
+		load_forest()
 	
 	return forest.query(minhash, 10)
 
