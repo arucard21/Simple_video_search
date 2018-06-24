@@ -30,18 +30,28 @@
 	<body>
 		<script>
 			function searchVideos(providedURL){
-				$.getJSON('api/videos', {videoURL: providedURL})
+				let urlParams = new URLSearchParams(window.location.search);
+				useForestParam = urlParams.get('useForest');
+				$.getJSON('api/videos', {videoURL: providedURL, useForest: useForestParam})
 					.done(function( similarVideos) {
-						searchResults = '<h3>Feature-based</h3>Video ID, Distance<br>';
-						for (var index = 0; index < similarVideos[0].length; index++){
-							searchResults = searchResults + similarVideos[0][index][0] + ", " + similarVideos[0][index][1] + '<br>'
+						searchResults = ''
+						if(useForestParam.toLowerCase() == 'true'){
+							searchResults = searchResults + '<h3>Label-based, top 10</h3>Video ID<br>'
+							for (var index = 0; index < similarVideos.length; index++){
+								searchResults = searchResults + similarVideos[index] + '<br>'
+							}
 						}
-						searchResults = searchResults + '<h3>Label-based</h3>Video ID, Distance<br>'
-						for (var index = 0; index < similarVideos[1].length; index++){
-							searchResults = searchResults + similarVideos[1][index][0] + ", " + similarVideos[1][index][1] + '<br>'
+						else{
+							searchResults = '<h3>Feature-based</h3>Video ID, Distance<br>';
+							for (var index = 0; index < similarVideos[0].length; index++){
+								searchResults = searchResults + similarVideos[0][index][0] + ", " + similarVideos[0][index][1] + '<br>'
+							}
+							searchResults = searchResults + '<h3>Label-based</h3>Video ID, Distance<br>'
+							for (var index = 0; index < similarVideos[1].length; index++){
+								searchResults = searchResults + similarVideos[1][index][0] + ", " + similarVideos[1][index][1] + '<br>'
+							}
 						}
-						
-						document.getElementById('searchResults').innerHTML = searchResults;//'The video successfully had its features extracted and was classified (see web console for more details)'
+						document.getElementById('searchResults').innerHTML = searchResults;
 						// TODO maybe improve how the videos are shown as this is not for debug purposes
 					})
 					.fail(function() {

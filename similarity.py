@@ -1,8 +1,10 @@
 import glob
+import pickle
 import numpy as np
 import tensorflow as tf
 from scipy.spatial.distance import jaccard
-
+from datasketch import MinHashLSHForest, MinHash
+LSH_FOREST_FILE = 'lsh_forest.pkl'
 MAX_AMOUNT_LABELS = 4716
 MINIMUM_PROBABILITY = 0.6
 
@@ -90,3 +92,48 @@ def similar_videos(provided_features, inferred_label_probabilities):
 	top10_feature_based = nn_distance[:10]
 	top10_label_based = jac_distance[:10]
 	return (top10_feature_based, top10_label_based)
+
+def create_LSH_Forest():
+	train_records = glob.glob("dataset/train*.tfrecord")
+	validate_records = glob.glob("dataset/validate*.tfrecord")
+	all_records = train_records+validate_records
+	dataset = tf.data.TFRecordDataset(all_records)
+	iterator = dataset.make_one_shot_iterator()
+	forest = MinHashLSHForest(num_perm=128)
+	count = 0
+	next_element = iterator.get_next()
+	with tf.Session() as sess:
+		try:
+			while True:
+				exampleBinaryString= sess.run(next_element)
+				example = tf.train.Example.FromString(exampleBinaryString)
+				count += 1
+				example_id = example.features.feature["id"].bytes_list.value[0]
+				
+				dataset_labels_full = convert_dataset_labels_to_list(example.features.feature["labels"].int64_list.value)
+				minhash = MinHash(num_perm=128)
+				for label in dataset_labels_full:
+					minhash.update(label)
+				forest.add(example_id, minhash)
+		except tf.errors.OutOfRangeError:
+			print "[SimpleVideoSearch] Done iterating through dataset"
+		finally:
+			print "[SimpleVideoSearch] Processed {} records from the dataset".format(count)
+		forest.index()
+		with open(LSH_FOREST_FILE, 'wb') as forest_file:
+			pickle.dump(forest, forest_file, pickle.HIGHEST_PROTOCOL)
+
+def similar_videos_from_forest(inferred_label_probabilities):
+	inferred_labels_full = convert_inferred_labels_to_list(inferred_label_probabilities)
+	minhash = MinHash(num_perm=128)
+	for label in inferred_labels_full:
+		minhash.update(label)
+
+	forest = None
+	with open(LSH_FOREST_FILE, 'rb') as forest_file:
+		forest = pickle.load(forest_file)
+	
+	return forest.query(minhash, 10)
+
+if __name__ == '__main__':
+	create_LSH_Forest()

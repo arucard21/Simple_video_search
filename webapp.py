@@ -8,7 +8,7 @@ from flask import Flask, render_template, request
 from flask_restful import Resource, Api
 import tensorflow as tf
 from extract_tfrecords_main import extract_features
-from similarity import similar_videos
+from similarity import similar_videos, similar_videos_from_forest
 from youtube8m.inference import infer
 from google.protobuf.json_format import MessageToJson
 
@@ -32,6 +32,12 @@ class Videos(Resource):
 		isStreamed = False
 		if url.netloc == 'www.youtube.com':
 			isStreamed = True
+		
+		
+		useForestParam = request.args.get('useForest')
+		useForest = False
+		if useForestParam.lower() == 'true':
+			useForest = True
 
 		# Extract the features to a .tfrecord file
 		print >> sys.stdout, '[SimpleVideoSearch] Extracting the features of this video'
@@ -50,9 +56,13 @@ class Videos(Resource):
 			inferenceReader= csv.DictReader(csvfile)
 			firstInference = inferenceReader.next()
 
-		# Detect similar videos based on both the feature-vector and the classified labels
-		top10_feature_based, top10_label_based = similar_videos(features, firstInference)
-		return [top10_feature_based, top10_label_based]
+		if useForest:
+			print >> sys.stdout, '[SimpleVideoSearch] Searching using the pickled forest'
+			return similar_videos_from_forest(firstInference)
+		else:
+			print >> sys.stdout, '[SimpleVideoSearch] Searching directly in the dataset'
+			top10_feature_based, top10_label_based = similar_videos(features, firstInference)
+			return [top10_feature_based, top10_label_based]
 
 api.add_resource(Videos, '/api/videos/')
 
