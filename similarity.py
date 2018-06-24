@@ -42,7 +42,7 @@ def convert_inferred_labels_to_list(inferred_label_probabilities):
 	for label_key, label_probability in label_tuples.iteritems():
 		if label_probability >= MINIMUM_PROBABILITY:
 			inferred_labels_full[label_key] = 1
-	print 'Inferred {} relevant labels'.format(sum(inferred_labels_full))
+	print '[SimpleVideoSearch] Inferred {} relevant labels'.format(sum(inferred_labels_full))
 	return inferred_labels_full
 
 def convert_dataset_labels_to_list(dataset_labels):
@@ -77,15 +77,11 @@ def similar_videos(provided_features, inferred_label_probabilities):
 				
 				# Compare the provided inference results with this element of the dataset (Jaccard distance)
 				dataset_labels_full = convert_dataset_labels_to_list(example.features.feature["labels"].int64_list.value)
-				max_array_size = max(len(inferred_labels_full), len(dataset_labels_full))
-				inferred_labels_full.resize(max_array_size)
-				dataset_labels_full.resize(max_array_size)
-				#print 'Dataset record contained {} labels'.format(sum(dataset_labels_full))
 				jac_distance.append((example_id, jaccard(inferred_labels_full, dataset_labels_full)))
 		except tf.errors.OutOfRangeError:
-			print "Done iterating through dataset"
+			print "[SimpleVideoSearch] Done iterating through dataset"
 		finally:
-			print "Processed {} records from the dataset".format(count)
+			print "[SimpleVideoSearch] Processed {} records from the dataset".format(count)
 	# Sort the lists based on distance
 	nn_distance.sort(key = lambda tuple: tuple[1])
 	jac_distance.sort(key = lambda tuple: tuple[1])
