@@ -32,7 +32,6 @@
 			function searchVideos(providedURL){
 				$.getJSON('api/videos', {videoURL: providedURL})
 					.done(function( similarVideos) {
-						console.log(similarVideos)
 						searchResults = '<h3>Feature-based</h3>Video ID, Distance<br>';
 						for (var index = 0; index < similarVideos[0].length; index++){
 							searchResults = searchResults + similarVideos[0][index][0] + ", " + similarVideos[0][index][1] + '<br>'

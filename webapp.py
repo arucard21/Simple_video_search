@@ -41,7 +41,7 @@ class Videos(Resource):
 		for returnedValue in tf.python_io.tf_record_iterator(tfrecord):
 			example = tf.train.Example.FromString(returnedValue)
 		features = example.features
-		
+
 		# Classify the video based on the .tfrecord file and store the results in a .csv file
 		print >> sys.stdout, '[SimpleVideoSearch] Classifying the video'
 		infer(trained_model_dir, tfrecord, csv_file)		
@@ -49,11 +49,6 @@ class Videos(Resource):
 		with open(csv_file, "rb") as csvfile:
 			inferenceReader= csv.DictReader(csvfile)
 			firstInference = inferenceReader.next()
-		
-		# Return a JSON containing the feature fector and inference results (for debugging purposes)
-		# FIXME remove this debugging code when once it's no longer needed
-		with open('debug.json', 'w') as debug_file:
-			json.dump('{{"feature_vector": {}, "inference_results": {}}}'.format(MessageToJson(features), firstInference), debug_file)
 
 		# Detect similar videos based on both the feature-vector and the classified labels
 		top10_feature_based, top10_label_based = similar_videos(features, firstInference)
