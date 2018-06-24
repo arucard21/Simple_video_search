@@ -3,7 +3,8 @@ import numpy as np
 import tensorflow as tf
 from scipy.spatial.distance import jaccard
 
-JACCARD_THRESHOLD = 0.6
+MAX_AMOUNT_LABELS = 4716
+MINIMUM_PROBABILITY = 0.6
 
 def nearest_neighbor_single_feature(provided, dataset):
 	assert len(provided) == len(dataset)
@@ -37,17 +38,15 @@ def convert_inferred_labels_to_tuples_list(inferred_label_probabilities):
 	
 def convert_inferred_labels_to_list(inferred_label_probabilities):
 	label_tuples = convert_inferred_labels_to_tuples_list(inferred_label_probabilities)
-	max_label_key = max(label_tuples.keys())
-	inferred_labels_full = np.zeros(max_label_key+1, dtype=int)
+	inferred_labels_full = np.zeros(MAX_AMOUNT_LABELS, dtype=int)
 	for label_key, label_probability in label_tuples.iteritems():
-		if label_probability >= JACCARD_THRESHOLD:
+		if label_probability >= MINIMUM_PROBABILITY:
 			inferred_labels_full[label_key] = 1
 	print 'Inferred {} relevant labels'.format(sum(inferred_labels_full))
 	return inferred_labels_full
 
 def convert_dataset_labels_to_list(dataset_labels):
-	max_label_key = max(dataset_labels)
-	dataset_labels_full = np.zeros(max_label_key+1, dtype=int)
+	dataset_labels_full = np.zeros(MAX_AMOUNT_LABELS, dtype=int)
 	for label_key in dataset_labels:
 		dataset_labels_full[label_key] = 1
 	return dataset_labels_full
