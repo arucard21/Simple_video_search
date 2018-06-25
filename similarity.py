@@ -53,7 +53,7 @@ def convert_inferred_labels_to_list(inferred_label_probabilities):
 	for label_key, label_probability in label_tuples.iteritems():
 		if label_probability >= MINIMUM_PROBABILITY:
 			inferred_labels_full[label_key] = 1
-	print '[SimpleVideoSearch] Inferred {} relevant labels'.format(sum(inferred_labels_full))
+	print '[SimpleVideoSearch][{}] Inferred {} relevant labels'.format(datetime.now(), sum(inferred_labels_full))
 	return inferred_labels_full
 
 def convert_dataset_labels_to_list(dataset_labels):
@@ -90,9 +90,9 @@ def similar_videos(provided_features, inferred_label_probabilities):
 				dataset_labels_full = convert_dataset_labels_to_list(example.features.feature["labels"].int64_list.value)
 				jac_distance.append((example_id, jaccard(inferred_labels_full, dataset_labels_full)))
 		except tf.errors.OutOfRangeError:
-			print "[SimpleVideoSearch] Done iterating through dataset"
+			print "[SimpleVideoSearch][{}] Done iterating through dataset".format(datetime.now())
 		finally:
-			print "[SimpleVideoSearch] Processed {} records from the dataset".format(count)
+			print "[SimpleVideoSearch][{}] Processed {} records from the dataset".format(datetime.now(), count)
 	# Sort the lists based on distance
 	nn_distance.sort(key = lambda tuple: tuple[1])
 	jac_distance.sort(key = lambda tuple: tuple[1])
@@ -132,9 +132,9 @@ def create_LSH_Forest():
 					minhash.update(label)
 				forest.add(example_id, minhash)
 		except tf.errors.OutOfRangeError:
-			print "[SimpleVideoSearch] Done iterating through dataset"
+			print "[SimpleVideoSearch][{}] Done iterating through dataset".format(datetime.now())
 		finally:
-			print "[SimpleVideoSearch] Processed {} records from the dataset".format(count)
+			print "[SimpleVideoSearch][{}] Processed {} records from the dataset".format(datetime.now(), count)
 		forest.index()
 		with open(LSH_FOREST_FILE, 'wb') as forest_file:
 			pickle.dump(forest, forest_file, pickle.HIGHEST_PROTOCOL)

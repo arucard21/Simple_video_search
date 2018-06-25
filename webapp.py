@@ -3,6 +3,7 @@ import sys
 import csv
 import json
 from urlparse import urlparse
+from datetime import datetime
 
 from flask import Flask, render_template, request
 from flask_restful import Resource, Api
@@ -40,7 +41,7 @@ class Videos(Resource):
 			useForest = True
 
 		# Extract the features to a .tfrecord file
-		print >> sys.stdout, '[SimpleVideoSearch] Extracting the features of this video'
+		print >> sys.stdout, '[SimpleVideoSearch][{}] Extracting the features of this video'.format(datetime.now())
 		sys.stdout.flush()
 		extract_features(tfrecord, [videoURL], ["1"], streaming = isStreamed)
 		example = None
@@ -49,7 +50,7 @@ class Videos(Resource):
 		features = example.features
 
 		# Classify the video based on the .tfrecord file and store the results in a .csv file
-		print >> sys.stdout, '[SimpleVideoSearch] Classifying the video'
+		print >> sys.stdout, '[SimpleVideoSearch][{}] Classifying the video'.format(datetime.now())
 		infer(trained_model_dir, tfrecord, csv_file)		
 		firstInference = None
 		with open(csv_file, "rb") as csvfile:
@@ -57,10 +58,10 @@ class Videos(Resource):
 			firstInference = inferenceReader.next()
 
 		if useForest:
-			print >> sys.stdout, '[SimpleVideoSearch] Searching using the pickled forest'
+			print >> sys.stdout, '[SimpleVideoSearch][{}] Searching using the pickled forest'.format(datetime.now())
 			return similar_videos_from_forest(firstInference)
 		else:
-			print >> sys.stdout, '[SimpleVideoSearch] Searching directly in the dataset'
+			print >> sys.stdout, '[SimpleVideoSearch][{}] Searching directly in the dataset'.format(datetime.now())
 			top10_feature_based, top10_label_based = similar_videos(features, firstInference)
 			return [top10_feature_based, top10_label_based]
 
