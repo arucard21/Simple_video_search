@@ -35,7 +35,7 @@
 				$.getJSON('api/videos', {videoURL: providedURL, useForest: useForestParam})
 					.done(function( similarVideos) {
 						searchResults = ''
-						if(useForestParam.toLowerCase() == 'true'){
+						if(useForestParam !== null && useForestParam.toLowerCase() == 'true'){
 							searchResults = searchResults + '<h3>Label-based, top 10</h3>Video ID<br>'
 							for (var index = 0; index < similarVideos.length; index++){
 								searchResults = searchResults + similarVideos[index] + '<br>'
