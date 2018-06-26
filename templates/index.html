@@ -29,6 +29,12 @@
 	</head>
 	<body>
 		<script>
+			function i(video_id, yt_id){
+				curResults = document.getElementById('searchResults').innerHTML;
+				curResults = curResults + '<a href="https://www.youtube.com/watch?v=' + yt_id + '">'+video_id+'</a><br>'
+				document.getElementById('searchResults').innerHTML = curResults;
+			}
+			
 			function searchVideos(providedURL){
 				let urlParams = new URLSearchParams(window.location.search);
 				useForestParam = urlParams.get('useForest');
@@ -36,9 +42,12 @@
 					.done(function( similarVideos) {
 						searchResults = ''
 						if(useForestParam !== null && useForestParam.toLowerCase() == 'true'){
-							searchResults = searchResults + '<h3>Label-based, top 10</h3>Video ID<br>'
+							searchResults = searchResults + '<h3>Label-based, top 10</h3>Video<br>'
 							for (var index = 0; index < similarVideos.length; index++){
-								searchResults = searchResults + similarVideos[index] + '<br>'
+								id = similarVideos[index];
+								$.ajax({
+									dataType: "jsonp",
+									url: 'http://data.yt8m.org/2/j/i/'+id[0]+id[1]+'/'+id+'.js'});
 							}
 						}
 						else{
