@@ -9,12 +9,12 @@ from scipy.spatial.distance import jaccard
 from datasketch import MinHashLSHForest, MinHash
 LSH_FOREST_FILE = 'lsh_forest.pkl'
 MAX_AMOUNT_LABELS = 4716
-MINIMUM_PROBABILITY = 0.6
+MINIMUM_PROBABILITY = 0.3
 forest = None
 inferred_labels = dict()
 
 def get_inferred_labels(video_id):
-	return inferred_labels[video_id]
+	return inferred_labels.pop(video_id)
 
 def load_forest():
 	global forest
@@ -65,7 +65,6 @@ def convert_inferred_labels_to_list(inferred_label_probabilities):
 			print '[SimpleVideoSearch][{}] Inferred label {} for this video'.format(datetime.now(), label_key)
 			labels_list.append(label_key)
 	inferred_labels[stripped_video_id] = labels_list
-	print inferred_labels
 	print '[SimpleVideoSearch][{}] Inferred {} relevant labels'.format(datetime.now(), sum(inferred_labels_full))
 	return inferred_labels_full
 
@@ -116,6 +115,7 @@ def similar_videos(provided_features, inferred_label_probabilities):
 	return (top10_feature_based, top10_label_based)
 
 def create_LSH_Forest():
+	load_forest()
 	train_records = glob.glob("dataset/train*.tfrecord")
 	validate_records = glob.glob("dataset/validate*.tfrecord")
 	all_records = train_records+validate_records
@@ -138,12 +138,12 @@ def create_LSH_Forest():
 				example = tf.train.Example.FromString(exampleBinaryString)
 				count += 1
 				example_id = example.features.feature["id"].bytes_list.value[0]
-				
-				dataset_labels_full = convert_dataset_labels_to_list(example.features.feature["labels"].int64_list.value)
-				minhash = MinHash(num_perm=128)
-				for label in dataset_labels_full:
-					minhash.update(label)
-				forest.add(example_id, minhash)
+				if not forest.__contains__(example_id)
+					dataset_labels_full = convert_dataset_labels_to_list(example.features.feature["labels"].int64_list.value)
+					minhash = MinHash(num_perm=128)
+					for label in dataset_labels_full:
+						minhash.update(label)
+					forest.add(example_id, minhash)
 		except tf.errors.OutOfRangeError:
 			print "[SimpleVideoSearch][{}] Done iterating through dataset".format(datetime.now())
 		finally:
