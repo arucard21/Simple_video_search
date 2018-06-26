@@ -1,12 +1,8 @@
 import glob
 import pickle
 from datetime import datetime
-import numpy as np
 import tensorflow as tf
-from scipy.spatial.distance import jaccard
-from datasketch import MinHashLSHForest, MinHash
 LABELS_FILE = 'labels.pkl'
-MAX_AMOUNT_LABELS = 4716
 labels = None
 
 def get_labels(video_id):
