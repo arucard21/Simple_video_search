@@ -8,7 +8,7 @@ from datetime import datetime
 from flask import Flask, render_template, request
 from flask_restful import Resource, Api
 import tensorflow as tf
-from extract_tfrecords_main import extract_features
+from youtube8m.feature_extractor.extract_tfrecords_main import extract_features
 from similarity import load_forest, similar_videos, similar_videos_from_forest
 from youtube8m.inference import infer
 from google.protobuf.json_format import MessageToJson
