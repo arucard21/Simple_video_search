@@ -88,13 +88,6 @@ def inference(reader, train_dir, data_pattern, out_file_location, batch_size, to
     meta_graph_location = checkpoint_file + ".meta"
     logging.info("loading meta-graph: " + meta_graph_location)
 
-#    if FLAGS.output_model_tgz:
-#      with tarfile.open(FLAGS.output_model_tgz, "w:gz") as tar:
-#        for model_file in glob.glob(checkpoint_file + '.*'):
-#          tar.add(model_file, arcname=os.path.basename(model_file))
-#        tar.add(os.path.join(FLAGS.train_dir, "model_flags.json"),
-#                arcname="model_flags.json")
-#      print('Tarred model onto ' + FLAGS.output_model_tgz)
     with tf.device("/cpu:0"):
       saver = tf.train.import_meta_graph(meta_graph_location, clear_devices=True)
     logging.info("restoring variables from " + checkpoint_file)
@@ -174,7 +167,3 @@ def infer(train_dir, input_data_pattern, output_file, top_k=20, batch_size=8192,
 
   inference(reader, train_dir, input_data_pattern,
     output_file, batch_size, top_k)
-
-
-#if __name__ == "__main__":
-#  app.run()
