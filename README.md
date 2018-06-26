@@ -1,7 +1,7 @@
 # Simple Video Search
 A simple system that allows searching for videos from the Youtube-8M dataset based on their similarity to a provided video.
 
-## Usage
+## Preparation
 In order to make the system work, 2 additional directories have to be added to the root of the application:
 
 * `dataset`: This should contain the Youtube-8M dataset (see Minimal Dataset section below)
@@ -22,3 +22,8 @@ The system allows iterating through the TFRecord files in the dataset though due
 Alternatively, the system can use the hashes from `lsh_forest.pkl`, in which case it doesn't need to use the TFRecords from the dataset at all. Here, the system actually provides search results from the entire dataset, meaning all `train*.tfrecord` and `validate*.tfrecord` files. 
 
 However, for inferring the labels for each new video, the system still needs all `validate*.tfrecord` files. So a minimal dataset for this system would need to consist of all `validate*.tfrecord` files and the `train00.tfrecord` file.
+
+## Usage
+In order to start the system, just run `python webapp.py`. 
+
+This will load the hashes (might take some time depending on the size of the file) and start the web application which you can access at `http://localhost:5000` (or `http://localhost:5000/?useForest=True` to use the loaded hashes)
