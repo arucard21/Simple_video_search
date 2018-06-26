@@ -1,4 +1,5 @@
 import glob
+import os
 import pickle
 import re
 from datetime import datetime
@@ -21,6 +22,7 @@ def load_forest():
 	print "[SimpleVideoSearch][{}] Loading pickled LSH Forest".format(datetime.now())
 	with open(LSH_FOREST_FILE, 'rb') as forest_file:
 		forest = pickle.load(forest_file)
+		forest.index()
 	print "[SimpleVideoSearch][{}] Done loading pickled LSH Forest".format(datetime.now())
 
 def nearest_neighbor_single_feature(provided, dataset):
@@ -115,21 +117,25 @@ def similar_videos(provided_features, inferred_label_probabilities):
 	return (top10_feature_based, top10_label_based)
 
 def create_LSH_Forest():
-	load_forest()
+	global forest
+	if os.path.isfile(LSH_FOREST_FILE):
+		load_forest()
+	else:
+		forest = MinHashLSHForest(num_perm=128)
 	train_records = glob.glob("dataset/train*.tfrecord")
 	validate_records = glob.glob("dataset/validate*.tfrecord")
 	all_records = train_records+validate_records
 	dataset = tf.data.TFRecordDataset(all_records)
 	iterator = dataset.make_one_shot_iterator()
-	forest = MinHashLSHForest(num_perm=128)
 	count = 0
 	next_element = iterator.get_next()
+	updated = False
 	with tf.Session() as sess:
 		try:
 			while True:
 				if count % 10000 == 0:
 					print "[SimpleVideoSearch][{}] Processed {} records from the dataset so far".format(datetime.now(), count)
-				if count % 100000 == 0:
+				if updated and count % 100000 == 0:
 					with open(LSH_FOREST_FILE, 'wb') as forest_file:
 						forest.index()
 						pickle.dump(forest, forest_file, pickle.HIGHEST_PROTOCOL)
@@ -138,7 +144,10 @@ def create_LSH_Forest():
 				example = tf.train.Example.FromString(exampleBinaryString)
 				count += 1
 				example_id = example.features.feature["id"].bytes_list.value[0]
-				if not forest.__contains__(example_id)
+				if example_id not in forest:
+					if not updated:
+						updated = True
+						print '[SimpleVideoSearch][{}] First update at record {}'.format(datetime.now(), count)
 					dataset_labels_full = convert_dataset_labels_to_list(example.features.feature["labels"].int64_list.value)
 					minhash = MinHash(num_perm=128)
 					for label in dataset_labels_full:
@@ -148,9 +157,10 @@ def create_LSH_Forest():
 			print "[SimpleVideoSearch][{}] Done iterating through dataset".format(datetime.now())
 		finally:
 			print "[SimpleVideoSearch][{}] Processed {} records from the dataset".format(datetime.now(), count)
-		forest.index()
-		with open(LSH_FOREST_FILE, 'wb') as forest_file:
-			pickle.dump(forest, forest_file, pickle.HIGHEST_PROTOCOL)
+			forest.index()
+			with open(LSH_FOREST_FILE, 'wb') as forest_file:
+				pickle.dump(forest, forest_file, pickle.HIGHEST_PROTOCOL)
+			print "[SimpleVideoSearch][{}] Finished creating LSH Forest file".format(datetime.now(), count)
 
 def similar_videos_from_forest(inferred_label_probabilities):
 	inferred_labels_full = convert_inferred_labels_to_list(inferred_label_probabilities)
