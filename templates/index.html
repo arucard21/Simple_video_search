@@ -50,7 +50,7 @@
 							console.log(strippedURL)
 							$.getJSON('/api/inferred/'+strippedURL)
 								.done(function(labels){
-									curLabels = document.getElementById('inferredLabels').innerHTML;
+									curLabels = '';
 									curLabels = curLabels + 'Inferred labels for searched video: ' + labels + '<br>'
 									document.getElementById('inferredLabels').innerHTML = curLabels;
 								});
