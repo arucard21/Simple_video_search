@@ -1,6 +1,8 @@
 import glob
 import pickle
+import re
 from datetime import datetime
+from urllib import unquote
 import numpy as np
 import tensorflow as tf
 from scipy.spatial.distance import jaccard
@@ -9,6 +11,10 @@ LSH_FOREST_FILE = 'lsh_forest.pkl'
 MAX_AMOUNT_LABELS = 4716
 MINIMUM_PROBABILITY = 0.6
 forest = None
+inferred_labels = dict()
+
+def get_inferred_labels(video_id):
+	return inferred_labels[video_id]
 
 def load_forest():
 	global forest
@@ -38,6 +44,7 @@ def nearest_neighbor_features(provided, dataset):
 	return distance_mean_rgb + distance_mean_audio
 
 def convert_inferred_labels_to_tuples_list(inferred_label_probabilities):
+	video_id = inferred_label_probabilities['VideoId']
 	label_pairs_str = inferred_label_probabilities['LabelConfidencePairs']
 	label_pairs_list = label_pairs_str.split()
 	label_pairs_length = len(label_pairs_list)
@@ -45,14 +52,20 @@ def convert_inferred_labels_to_tuples_list(inferred_label_probabilities):
 	assert label_pairs_length % 2 == 0
 	for index in range(0,label_pairs_length, 2):
 		label_tuples[int(label_pairs_list[index])] = float(label_pairs_list[index+1])
-	return label_tuples
+	return video_id, label_tuples
 	
 def convert_inferred_labels_to_list(inferred_label_probabilities):
-	label_tuples = convert_inferred_labels_to_tuples_list(inferred_label_probabilities)
+	video_id_str, label_tuples = convert_inferred_labels_to_tuples_list(inferred_label_probabilities)
+	stripped_video_id = re.sub(r'[^a-zA-Z0-9_]+', '', video_id_str)
 	inferred_labels_full = np.zeros(MAX_AMOUNT_LABELS, dtype=int)
+	labels_list = list()
 	for label_key, label_probability in label_tuples.iteritems():
 		if label_probability >= MINIMUM_PROBABILITY:
 			inferred_labels_full[label_key] = 1
+			print '[SimpleVideoSearch][{}] Inferred label {} for this video'.format(datetime.now(), label_key)
+			labels_list.append(label_key)
+	inferred_labels[stripped_video_id] = labels_list
+	print inferred_labels
 	print '[SimpleVideoSearch][{}] Inferred {} relevant labels'.format(datetime.now(), sum(inferred_labels_full))
 	return inferred_labels_full
 

@@ -113,3 +113,4 @@ logistic-model
 # intermediate results files
 providedVideo.tfrecord
 infer_results.csv
+labels.pkl

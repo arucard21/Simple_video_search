@@ -9,7 +9,8 @@ from flask import Flask, render_template, request
 from flask_restful import Resource, Api
 import tensorflow as tf
 from youtube8m.feature_extractor.extract_tfrecords_main import extract_features
-from similarity import load_forest, similar_videos, similar_videos_from_forest
+from similarity import load_forest, similar_videos, similar_videos_from_forest, get_inferred_labels
+from labels import load_labels, get_labels
 from youtube8m.inference import infer
 from google.protobuf.json_format import MessageToJson
 
@@ -65,8 +66,19 @@ class Videos(Resource):
 			top10_feature_based, top10_label_based = similar_videos(features, firstInference)
 			return [top10_feature_based, top10_label_based]
 
+class Labels(Resource):
+	def get(self, video_id):
+		return get_labels(video_id)
+
+class InferredLabels(Resource):
+	def get(self, video_id):
+		return get_inferred_labels(video_id)
+	
 api.add_resource(Videos, '/api/videos/')
+api.add_resource(Labels, '/api/labels/<string:video_id>')
+api.add_resource(InferredLabels, '/api/inferred/<string:video_id>')
 
 if __name__ == '__main__':
+	load_labels()
 	load_forest()
 	app.run(debug=True, use_reloader=False)
