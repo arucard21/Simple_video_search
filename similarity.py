@@ -3,7 +3,7 @@ import os
 import pickle
 import re
 from datetime import datetime
-from urllib import unquote
+from urllib.parse import unquote
 import numpy as np
 import tensorflow as tf
 from scipy.spatial.distance import jaccard
@@ -19,11 +19,11 @@ def get_inferred_labels(video_id):
 
 def load_forest():
 	global forest
-	print "[SimpleVideoSearch][{}] Loading pickled LSH Forest".format(datetime.now())
+	print("[SimpleVideoSearch][{}] Loading pickled LSH Forest".format(datetime.now()))
 	with open(LSH_FOREST_FILE, 'rb') as forest_file:
 		forest = pickle.load(forest_file)
 		forest.index()
-	print "[SimpleVideoSearch][{}] Done loading pickled LSH Forest".format(datetime.now())
+	print("[SimpleVideoSearch][{}] Done loading pickled LSH Forest".format(datetime.now()))
 
 def nearest_neighbor_single_feature(provided, dataset):
 	assert len(provided) == len(dataset)
@@ -61,13 +61,13 @@ def convert_inferred_labels_to_list(inferred_label_probabilities):
 	stripped_video_id = re.sub(r'[^a-zA-Z0-9_]+', '', video_id_str)
 	inferred_labels_full = np.zeros(MAX_AMOUNT_LABELS, dtype=int)
 	labels_list = list()
-	for label_key, label_probability in label_tuples.iteritems():
+	for label_key, label_probability in label_tuples.items():
 		if label_probability >= MINIMUM_PROBABILITY:
 			inferred_labels_full[label_key] = 1
-			print '[SimpleVideoSearch][{}] Inferred label {} for this video'.format(datetime.now(), label_key)
+			print('[SimpleVideoSearch][{}] Inferred label {} for this video'.format(datetime.now(), label_key))
 			labels_list.append(label_key)
 	inferred_labels[stripped_video_id] = labels_list
-	print '[SimpleVideoSearch][{}] Inferred {} relevant labels'.format(datetime.now(), sum(inferred_labels_full))
+	print('[SimpleVideoSearch][{}] Inferred {} relevant labels'.format(datetime.now(), sum(inferred_labels_full)))
 	return inferred_labels_full
 
 def convert_dataset_labels_to_list(dataset_labels):
@@ -104,9 +104,9 @@ def similar_videos(provided_features, inferred_label_probabilities):
 				dataset_labels_full = convert_dataset_labels_to_list(example.features.feature["labels"].int64_list.value)
 				jac_distance.append((example_id, jaccard(inferred_labels_full, dataset_labels_full)))
 		except tf.errors.OutOfRangeError:
-			print "[SimpleVideoSearch][{}] Done iterating through dataset".format(datetime.now())
+			print("[SimpleVideoSearch][{}] Done iterating through dataset".format(datetime.now()))
 		finally:
-			print "[SimpleVideoSearch][{}] Processed {} records from the dataset".format(datetime.now(), count)
+			print("[SimpleVideoSearch][{}] Processed {} records from the dataset".format(datetime.now(), count))
 	# Sort the lists based on distance
 	nn_distance.sort(key = lambda tuple: tuple[1])
 	jac_distance.sort(key = lambda tuple: tuple[1])
@@ -134,12 +134,12 @@ def create_LSH_Forest():
 		try:
 			while True:
 				if count % 10000 == 0:
-					print "[SimpleVideoSearch][{}] Processed {} records from the dataset so far".format(datetime.now(), count)
+					print("[SimpleVideoSearch][{}] Processed {} records from the dataset so far".format(datetime.now(), count))
 				if updated and count % 100000 == 0:
 					with open(LSH_FOREST_FILE, 'wb') as forest_file:
 						forest.index()
 						pickle.dump(forest, forest_file, pickle.HIGHEST_PROTOCOL)
-					print "[SimpleVideoSearch][{}] Updated LSH Forest file".format(datetime.now(), count)
+					print("[SimpleVideoSearch][{}] Updated LSH Forest file".format(datetime.now(), count))
 				exampleBinaryString= sess.run(next_element)
 				example = tf.train.Example.FromString(exampleBinaryString)
 				count += 1
@@ -147,20 +147,20 @@ def create_LSH_Forest():
 				if example_id not in forest:
 					if not updated:
 						updated = True
-						print '[SimpleVideoSearch][{}] First update at record {}'.format(datetime.now(), count)
+						print('[SimpleVideoSearch][{}] First update at record {}'.format(datetime.now(), count))
 					dataset_labels_full = convert_dataset_labels_to_list(example.features.feature["labels"].int64_list.value)
 					minhash = MinHash(num_perm=128)
 					for label in dataset_labels_full:
 						minhash.update(label)
 					forest.add(example_id, minhash)
 		except tf.errors.OutOfRangeError:
-			print "[SimpleVideoSearch][{}] Done iterating through dataset".format(datetime.now())
+			print("[SimpleVideoSearch][{}] Done iterating through dataset".format(datetime.now()))
 		finally:
-			print "[SimpleVideoSearch][{}] Processed {} records from the dataset".format(datetime.now(), count)
+			print("[SimpleVideoSearch][{}] Processed {} records from the dataset".format(datetime.now(), count))
 			forest.index()
 			with open(LSH_FOREST_FILE, 'wb') as forest_file:
 				pickle.dump(forest, forest_file, pickle.HIGHEST_PROTOCOL)
-			print "[SimpleVideoSearch][{}] Finished creating LSH Forest file".format(datetime.now(), count)
+			print("[SimpleVideoSearch][{}] Finished creating LSH Forest file".format(datetime.now(), count))
 
 def similar_videos_from_forest(inferred_label_probabilities):
 	inferred_labels_full = convert_inferred_labels_to_list(inferred_label_probabilities)

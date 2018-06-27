@@ -217,7 +217,7 @@ class AveragePrecisionCalculator(object):
     predictions, actuals = AveragePrecisionCalculator._shuffle(predictions,
                                                                actuals)
     sortidx = sorted(
-        range(len(predictions)),
+        list(range(len(predictions))),
         key=lambda k: predictions[k],
         reverse=True)
 
@@ -247,7 +247,7 @@ class AveragePrecisionCalculator(object):
   @staticmethod
   def _shuffle(predictions, actuals):
     random.seed(0)
-    suffidx = random.sample(range(len(predictions)), len(predictions))
+    suffidx = random.sample(list(range(len(predictions))), len(predictions))
     predictions = predictions[suffidx]
     actuals = actuals[suffidx]
     return predictions, actuals

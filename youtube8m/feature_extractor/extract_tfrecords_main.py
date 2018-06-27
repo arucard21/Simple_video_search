@@ -28,7 +28,7 @@ import os
 import sys
 
 import cv2
-import feature_extractor
+from . import feature_extractor
 import numpy
 import tensorflow as tf
 import youtube_dl
@@ -66,7 +66,7 @@ def extract_features(output_tfrecords_file,
             rgb_features.append(_bytes_feature(quantize(features)))
 
         if not rgb_features:
-            print >> sys.stderr, 'Could not get features for ' + video
+            print('Could not get features for ' + video, file=sys.stderr)
             total_error += 1
             continue
 
@@ -127,7 +127,7 @@ def frame_iterator(video_url, ydl, streaming, every_ms=1000, max_num_frames=300)
     else:
         video_capture = cv2.VideoCapture(video_url)
     if not video_capture.isOpened():
-        print >> sys.stderr, 'Error: Cannot open video url ' + video_url
+        print('Error: Cannot open video url ' + video_url, file=sys.stderr)
         return
     last_ts = -99999  # The timestamp of last retrieved frame.
     num_retrieved = 0

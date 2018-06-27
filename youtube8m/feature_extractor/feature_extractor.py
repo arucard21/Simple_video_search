@@ -139,7 +139,7 @@ class YouTube8MFeatureExtractor(object):
       sys.stdout.flush()
     urllib.request.urlretrieve(url, download_path, _progress)
     statinfo = os.stat(download_path)
-    print('Succesfully downloaded', filename, statinfo.st_size, 'bytes.')
+    print(('Succesfully downloaded', filename, statinfo.st_size, 'bytes.'))
     return download_path
 
   def _load_inception(self, proto_file):

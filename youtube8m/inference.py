@@ -28,10 +28,10 @@ from tensorflow import flags
 from tensorflow import gfile
 from tensorflow import logging
 
-import eval_util
-import losses
-import readers
-import utils
+from . import eval_util
+from . import losses
+from . import readers
+from . import utils
 
 def format_lines(video_ids, predictions, top_k):
   batch_size = len(video_ids)
