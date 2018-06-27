@@ -96,7 +96,7 @@ def similar_videos(provided_features, inferred_label_probabilities):
 				exampleBinaryString= sess.run(next_element)
 				example = tf.train.Example.FromString(exampleBinaryString)
 				count += 1
-				example_id = example.features.feature["id"].bytes_list.value[0]
+				example_id = example.features.feature["id"].bytes_list.value[0].decode('utf8')
 				# Compare the provided features with this element of the dataset (nearest neighbor)
 				nn_distance.append((example_id, nearest_neighbor_features(provided_features, example.features)))
 				
@@ -171,7 +171,11 @@ def similar_videos_from_forest(inferred_label_probabilities):
 	if forest == None:
 		load_forest()
 	
-	return forest.query(minhash, 10)
+	top_k_results = forest.query(minhash, 10)
+	top_k_results_str = list()
+	for result in top_k_results:
+		top_k_results_str.append(result.decode('utf8'))
+	return top_k_results_str
 
 if __name__ == '__main__':
 	create_LSH_Forest()

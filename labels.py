@@ -12,7 +12,7 @@ def load_labels():
 	global labels
 	print("[SimpleVideoSearch][{}] Loading pickled labels dict".format(datetime.now()))
 	with open(LABELS_FILE, 'rb') as labels_file:
-		labels = pickle.load(labels_file)
+		labels = pickle.load(labels_file, encoding='latin1')
 	print("[SimpleVideoSearch][{}] Done loading pickled labels dict".format(datetime.now()))
 
 def create_label_datastore():

@@ -22,7 +22,7 @@ def mainSearchPage():
     return render_template('index.html')
 
 class Videos(Resource):
-    def get(self):
+	def get(self):
 		# define variables for file and directory names
 		tfrecord = "providedVideo.tfrecord"
 		csv_file = "infer_results.csv"
@@ -54,7 +54,7 @@ class Videos(Resource):
 		print('[SimpleVideoSearch][{}] Classifying the video'.format(datetime.now()), file=sys.stdout)
 		infer(trained_model_dir, tfrecord, csv_file)		
 		firstInference = None
-		with open(csv_file, "rb") as csvfile:
+		with open(csv_file, "r") as csvfile:
 			inferenceReader= csv.DictReader(csvfile)
 			firstInference = next(inferenceReader)
 
