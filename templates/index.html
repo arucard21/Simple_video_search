@@ -32,9 +32,12 @@
 			function i(video_id, yt_id){
 				$.getJSON('/api/labels/'+video_id)
 					.done(function(labels){
-						curResults = document.getElementById('searchResults').innerHTML;
-						curResults = curResults + '<a href="https://www.youtube.com/watch?v=' + yt_id + '">'+video_id+'</a>: '+labels+'<br>'
-						document.getElementById('searchResults').innerHTML = curResults;
+						$.getJSON('/api/labelnames/'+labels)
+							.done(function(labelsString){
+								curResults = document.getElementById('searchResults').innerHTML;
+								curResults = curResults + '<a href="https://www.youtube.com/watch?v=' + yt_id + '">'+video_id+'</a>: '+labelsString+'<br>'
+								document.getElementById('searchResults').innerHTML = curResults;
+							});
 					});
 			}
 			
@@ -47,12 +50,13 @@
 						if(useForestParam !== null && useForestParam.toLowerCase() == 'true'){
 							searchResults = searchResults + '<h3>Label-based, top 10</h3>Video<br>'
 							strippedURL = providedURL.replace( /[^a-zA-Z0-9]/g , "")
-							console.log(strippedURL)
 							$.getJSON('/api/inferred/'+strippedURL)
 								.done(function(labels){
-									curLabels = '';
-									curLabels = curLabels + 'Inferred labels for searched video: ' + labels + '<br>'
-									document.getElementById('inferredLabels').innerHTML = curLabels;
+									$.getJSON('/api/labelnames/'+labels)
+										.done(function(labelsString){
+											curLabels = 'Inferred labels for searched video: ' + labelsString + '<br>'
+											document.getElementById('inferredLabels').innerHTML = curLabels;
+										});
 								});
 							for (var index = 0; index < similarVideos.length; index++){
 								id = similarVideos[index];
