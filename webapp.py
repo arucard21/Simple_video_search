@@ -11,6 +11,7 @@ import tensorflow as tf
 from youtube8m.feature_extractor.extract_tfrecords_main import extract_features
 from similarity import load_forest, similar_videos, similar_videos_from_forest, get_inferred_labels
 from labels import load_labels, get_labels
+from label_names import load_label_names, get_label_name
 from youtube8m.inference import infer
 from google.protobuf.json_format import MessageToJson
 
@@ -74,11 +75,23 @@ class InferredLabels(Resource):
 	def get(self, video_id):
 		return get_inferred_labels(video_id)
 	
+class LabelNames(Resource):
+	def get(self, label_id_list):
+		label_names_str = ''
+		for label_id in label_id_list.split(','):
+			if label_names_str == '':
+				label_names_str = get_label_name(label_id)
+			else:
+				label_names_str = label_names_str + ' / ' + get_label_name(label_id)
+		return label_names_str
+	
 api.add_resource(Videos, '/api/videos/')
 api.add_resource(Labels, '/api/labels/<string:video_id>')
 api.add_resource(InferredLabels, '/api/inferred/<string:video_id>')
+api.add_resource(LabelNames, '/api/labelnames/<string:label_id_list>')
 
 if __name__ == '__main__':
+	load_label_names()
 	load_labels()
 	load_forest()
-	app.run(debug=True, use_reloader=False)
+	app.run(host='0.0.0.0', debug=True, use_reloader=False)
