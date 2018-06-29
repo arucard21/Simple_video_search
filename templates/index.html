@@ -25,6 +25,26 @@
 			{
 				width: 10%;
 			}
+			
+			.loader {
+				display: none;
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				z-index: 1;
+				border: 8px solid #f3f3f3; /* Light grey */
+				border-top: 8px solid #3498db; /* Blue */
+				border-bottom: 8px solid #3498db;
+				border-radius: 50%;
+				width: 32px;
+				height: 32px;
+				animation: spin 2s linear infinite;
+			}
+
+			@keyframes spin {
+				0% { transform: rotate(0deg); }
+				100% { transform: rotate(360deg); }
+			} 
 		</style>
 	</head>
 	<body>
@@ -42,6 +62,8 @@
 			}
 			
 			function searchVideos(providedURL){
+				document.getElementById('search').disabled = true;
+				document.getElementById('loader').style.display = 'block';
 				let urlParams = new URLSearchParams(window.location.search);
 				useForestParam = urlParams.get('useForest');
 				$.getJSON('api/videos', {videoURL: providedURL, useForest: useForestParam})
@@ -82,7 +104,9 @@
 						document.getElementById('searchResults').innerHTML = "Could not retrieve videos similar to the one provided at " + providedURL;
 					})
 					.always(function() {
+						document.getElementById('loader').style.display = 'none';
 						document.getElementById('searchResultsHeader').style.display = 'block';
+						document.getElementById('search').disabled = false;
 						
 					});
 				return false;
@@ -96,6 +120,7 @@
 			<input type="url" id="videoURL" name="videoURL" value="https://cloud.arucard.duckdns.org/index.php/s/nbfeEFzTqFSeAtQ/download?path=%2F&files=Sintel.mkv">
 			<input type="submit" id="search" value="Search">
 		</form>
+		<div id="loader" class="loader"></div> 
 		<div id="inferredLabels">
 		</div>
 		<h2 id="featuresHeader">Features</h2>
