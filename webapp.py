@@ -20,78 +20,78 @@ api = Api(app)
 
 @app.route('/')
 def mainSearchPage():
-    return render_template('index.html')
+	return render_template('index.html')
 
 class Videos(Resource):
-    def get(self):
-        # define variables for file and directory names
-        tfrecord = "providedVideo.tfrecord"
-        csv_file = "infer_results.csv"
-        trained_model_dir = "logistic-model"
+	def get(self):
+		# define variables for file and directory names
+		tfrecord = "providedVideo.tfrecord"
+		csv_file = "infer_results.csv"
+		trained_model_dir = "logistic-model"
 
-        # parse URL and check if the hostname is that of a streaming site
-        videoURL = request.args.get('videoURL')
-        url = urlparse(videoURL)
-        isStreamed = False
-        if url.netloc == 'www.youtube.com':
-            isStreamed = True
-        
-        
-        useForestParam = request.args.get('useForest')
-        useForest = False
-        if useForestParam.lower() == 'true':
-            useForest = True
+		# parse URL and check if the hostname is that of a streaming site
+		videoURL = request.args.get('videoURL')
+		url = urlparse(videoURL)
+		isStreamed = False
+		if url.netloc == 'www.youtube.com':
+			isStreamed = True
+		
+		
+		useForestParam = request.args.get('useForest')
+		useForest = False
+		if useForestParam.lower() == 'true':
+			useForest = True
 
-        # Extract the features to a .tfrecord file
-        print('[SimpleVideoSearch][{}] Extracting the features of this video'.format(datetime.now()), file=sys.stdout)
-        sys.stdout.flush()
-        extract_features(tfrecord, [videoURL], ["1"], streaming = isStreamed)
-        example = None
-        for returnedValue in tf.python_io.tf_record_iterator(tfrecord):
-            example = tf.train.Example.FromString(returnedValue)
-        features = example.features
+		# Extract the features to a .tfrecord file
+		print('[SimpleVideoSearch][{}] Extracting the features of this video'.format(datetime.now()), file=sys.stdout)
+		sys.stdout.flush()
+		extract_features(tfrecord, [videoURL], ["1"], streaming = isStreamed)
+		example = None
+		for returnedValue in tf.python_io.tf_record_iterator(tfrecord):
+			example = tf.train.Example.FromString(returnedValue)
+		features = example.features
 
-        # Classify the video based on the .tfrecord file and store the results in a .csv file
-        print('[SimpleVideoSearch][{}] Classifying the video'.format(datetime.now()), file=sys.stdout)
-        infer(trained_model_dir, tfrecord, csv_file)        
-        firstInference = None
-        with open(csv_file, "r") as csvfile:
-            inferenceReader= csv.DictReader(csvfile)
-            firstInference = next(inferenceReader)
+		# Classify the video based on the .tfrecord file and store the results in a .csv file
+		print('[SimpleVideoSearch][{}] Classifying the video'.format(datetime.now()), file=sys.stdout)
+		infer(trained_model_dir, tfrecord, csv_file)		
+		firstInference = None
+		with open(csv_file, "r") as csvfile:
+			inferenceReader= csv.DictReader(csvfile)
+			firstInference = next(inferenceReader)
 
-        if useForest:
-            print('[SimpleVideoSearch][{}] Searching using the pickled forest'.format(datetime.now()), file=sys.stdout)
-            return similar_videos_from_forest(firstInference)
-        else:
-            print('[SimpleVideoSearch][{}] Searching directly in the dataset'.format(datetime.now()), file=sys.stdout)
-            top10_feature_based, top10_label_based = similar_videos(features, firstInference)
-            return [top10_feature_based, top10_label_based]
+		if useForest:
+			print('[SimpleVideoSearch][{}] Searching using the pickled forest'.format(datetime.now()), file=sys.stdout)
+			return similar_videos_from_forest(firstInference)
+		else:
+			print('[SimpleVideoSearch][{}] Searching directly in the dataset'.format(datetime.now()), file=sys.stdout)
+			top10_feature_based, top10_label_based = similar_videos(features, firstInference)
+			return [top10_feature_based, top10_label_based]
 
 class Labels(Resource):
-    def get(self, video_id):
-        return get_labels(video_id)
+	def get(self, video_id):
+		return get_labels(video_id)
 
 class InferredLabels(Resource):
-    def get(self, video_id):
-        return get_inferred_labels(video_id)
-    
+	def get(self, video_id):
+		return get_inferred_labels(video_id)
+	
 class LabelNames(Resource):
-    def get(self, label_id_list):
-        label_names_str = ''
-        for label_id in label_id_list.split(','):
-            if label_names_str == '':
-                label_names_str = get_label_name(label_id)
-            else:
-                label_names_str = label_names_str + ' / ' + get_label_name(label_id)
-        return label_names_str
-    
+	def get(self, label_id_list):
+		label_names_str = ''
+		for label_id in label_id_list.split(','):
+			if label_names_str == '':
+				label_names_str = get_label_name(label_id)
+			else:
+				label_names_str = label_names_str + ' / ' + get_label_name(label_id)
+		return label_names_str
+	
 api.add_resource(Videos, '/api/videos/')
 api.add_resource(Labels, '/api/labels/<string:video_id>')
 api.add_resource(InferredLabels, '/api/inferred/<string:video_id>')
 api.add_resource(LabelNames, '/api/labelnames/<string:label_id_list>')
 
 if __name__ == '__main__':
-    load_label_names()
-    load_labels()
-    load_forest()
-    app.run(host='0.0.0.0', debug=True, use_reloader=False)
+	load_label_names()
+	load_labels()
+	load_forest()
+	app.run(host='0.0.0.0', debug=True, use_reloader=False)
