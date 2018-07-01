@@ -38,3 +38,4 @@ This will load the hashes (might take some time depending on the size of the fil
 * SciPy
 * NumPy
 * datasketch
+* OpenCV
