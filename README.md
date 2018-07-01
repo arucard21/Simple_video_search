@@ -1,6 +1,8 @@
 # Simple Video Search
 A simple system that allows searching for videos from the Youtube-8M dataset based on their similarity to a provided video.
 
+Note -> This branch is only for Windows.
+
 ## Preparation
 In order to make the system work, 2 additional directories have to be added to the root of the application:
 
