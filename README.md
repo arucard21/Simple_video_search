@@ -30,7 +30,9 @@ In order to start the system, just run `python webapp.py`.
 
 This will load the hashes (might take some time depending on the size of the file) and start the web application which you can access at `http://localhost:5000` (or `http://localhost:5000/?useForest=True` to use the loaded hashes)
 
-### Required Dependencies
+### Requirements
+This system only works on Linux-based operating systems and uses Python 2.x. It also requires the following dependencies.
+
 * Tensorflow
 * Flask
 * Flask-RESTful
