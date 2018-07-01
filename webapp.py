@@ -20,7 +20,7 @@ api = Api(app)
 
 @app.route('/')
 def mainSearchPage():
-    return render_template('index.html')
+	return render_template('index.html')
 
 class Videos(Resource):
 	def get(self):
