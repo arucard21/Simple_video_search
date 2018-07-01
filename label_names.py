@@ -9,7 +9,7 @@ def get_label_name(label_id):
 def load_label_names():
 	global labels
 	
-	with open('vocabulary.csv') as csvfile:
+	with open('vocabulary.csv', encoding='utf8') as csvfile:
 		reader = csv.reader(csvfile)
 		next(reader, None)
 		for rows in reader:
